@@ -55,9 +55,19 @@ public class WatchdogReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(ACTION_RESPAWN)){
             final Config config = new Config(context);
-            if (!config.isManuallyStopped()) {
-                if (config.isForeground()) {
-                    ContextCompat.startForegroundService(context, new Intent(context, BackgroundService.class));
+            boolean isRunning = false;
+            Object manager = context.getSystemService(Context.ACTIVITY_SERVICE);
+            for (val service : manager.getRunningServices(Int.MAX_VALUE)) {
+                if (BackgroundService.className == service.service.className) {
+                    isRunning = true;
+                }
+            }
+            if (!config.isManuallyStopped && !isRunning) {
+                if (config.isForeground) {
+                    ContextCompat.startForegroundService(
+                        context,
+                        new Intent(context, BackgroundService.class)
+                    );
                 } else {
                     context.startService(new Intent(context, BackgroundService.class));
                 }
